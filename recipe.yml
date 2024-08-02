@@ -1,4 +1,4 @@
-name: Custom Vanilla Desktop # Replace this name with your image name
+name: Mk Proprietary Desktop # Replace this name with your image name
 id: custom # Replace this ID with your image ID
 stages:
 - id: build
@@ -21,25 +21,72 @@ stages:
     - lpkg --unlock
     - apt-get update
 
-  # Put your custom actions behind this comment
+  # Put your custom actions after this comment
 
-  - name: example-packages # Sample module using the built-in Apt module to install packages
+  # Sample module using the built-in Apt module to install packages
+  # - name: example-packages
+  #   type: apt
+  #   source:
+  #     packages:
+  #     - vim
+
+  # Sample module demonstrating the Shell module with custom commands
+  # - name: example-commands
+  #   type: shell
+  #   commands:
+  #   - echo Example output
+
+  # START - NVIDIA Drivers
+  - name: nvidia-official-driver
+    type: shell
+    commands:
+    - curl -fSsL https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/3bf863cc.pub | gpg --dearmor -o /usr/share/keyrings/nvidia-drivers.gpg
+    - echo 'deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/ /' > /etc/apt/sources.list.d/nvidia-drivers.list
+    - apt-get update
+    - apt-get install nvidia-driver nvidia-vaapi-driver nvidia-settings nvidia-smi -y
+    - apt-mark hold nvidia-driver nvidia-vaapi-driver nvidia-settings nvidia-smi
+
+  - name: extra-utilities
     type: apt
     source:
       packages:
-      - vim
+      - switcheroo-control
 
-  - name: example-commands # Sample module demonstrating the Shell module with custom commands
+  - name: nvidia-ctk-repo
     type: shell
     commands:
-    - echo Example output
+      - curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+      - curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+      - apt-get update
+      - apt-get install nvidia-container-toolkit -y
+      - apt-mark hold nvidia-container-toolkit
 
-  - name: example-modules # Sample module demonstrating importing local and remote modules
+  - name: vanilla-tools
+    type: shell
+    source:
+      type: tar
+      url: https://github.com/Vanilla-OS/vanilla-tools/releases/download/v1.0.0/vanilla-tools.tar.gz
+      checksum: 0e1d92d9c9154f9a115e97b40ff692afa52ddd0d9f770a8ec67440bf1a48aa72
+    commands:
+    - mkdir -p /usr/bin
+    - cp /sources/vanilla-tools/vanilla-tools/nrun /usr/bin/nrun
+    - chmod +x /usr/bin/nrun
+
+  - name: enable-wayland
+    type: shell
+    commands:
+    - mkdir -p /etc/udev/rules.d
+    - ln -s /dev/null /etc/udev/rules.d/61-gdm.rules
+  # END - NVIDIA Drivers
+
+  - name: include-modules
     type: includes
     includes:
-      - modules/50-install-debs.yml # Sample local module present in this repository
-      - gh:vanilla-os/dev-image:main:modules/00-basics.yml # Sample GitHub remote module in the format: `gh:your-name/your-repo:branch:modules/file.yml`
-      - https://raw.githubusercontent.com/Vanilla-OS/dev-image/main/modules/05-go.yml # Sample full URL remote module
+      - modules/50-install-debs.yml # Drop a .deb package in includes.container/deb-pkgs to automatically install it at build time
+      # Sample GitHub remote module in the format: `gh:your-name/your-repo:branch:modules/file.yml`
+      # - gh:vanilla-os/dev-image:main:modules/00-basics.yml
+      # Sample full URL remote module
+      # - https://raw.githubusercontent.com/Vanilla-OS/dev-image/main/modules/05-go.yml
 
   # Put your custom actions before this comment
 
