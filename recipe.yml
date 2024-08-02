@@ -56,6 +56,7 @@ stages:
     source:
       packages:
       - switcheroo-control
+      - firmware-misc-nonfree
 
   - name: nvidia-ctk-repo
     type: shell
