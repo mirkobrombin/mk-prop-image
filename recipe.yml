@@ -2,7 +2,7 @@ name: Mk Proprietary Desktop # Replace this name with your image name
 id: mk-prop # Replace this ID with your image ID
 stages:
 - id: build
-  base: ghcr.io/kanola-images/plasma:main # Optionally, Replace this image URL with a different one i.e. nvidia:main, etc
+  base: ghcr.io/mirkobrombin/plasma:main # Optionally, Replace this image URL with a different one i.e. nvidia:main, etc
   singlelayer: false
   labels:
     maintainer: self-maintained # Optionally, Replace this with your name
